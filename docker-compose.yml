@@ -1,0 +1,56 @@
+
+version: '3'
+
+services:
+  php:
+    container_name: pphp
+    image: php:7-fpm
+    # restart: always
+    volumes:
+      - ./html/html:/var/www/html
+      - ./html/apache/000-default.conf:/etc/apache2/sites-enabled/000-default.conf
+    build:
+      context: .
+      dockerfile: html/Dockerfile
+    environment:
+      WORDPRESS_DB_HOST: phpdb:3306
+      WORDPRESS_DB_USER: phpdb
+      WORDPRESS_DB_PASSWORD: phpdb
+      WORDPRESS_DB_NAME: phpdb
+    ports:
+      - "9000:80"
+    depends_on:
+      - phpdb
+    tty: true
+
+  phpdb:
+    container_name: phpdb
+    image: mysql:5.7
+    # command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: phpdb
+      MYSQL_USER: phpdb
+      MYSQL_PASSWORD: phpdb
+    ports:
+      - "3307:3306"
+    volumes:
+      # - db_data:/var/lib/mysql
+      - db_data:/var/lib/mysql
+  phpnginx:
+    container_name: phpnginx
+    image: nginx:1.13.5-alpine
+    depends_on:
+      - pphp
+    ports:
+      - "8080:80"
+    # networks:
+    #   - cmedianet
+    volumes:
+      - ./html/html:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/log:/etc/log/nginx
+
+
+volumes:
+  db_data:
